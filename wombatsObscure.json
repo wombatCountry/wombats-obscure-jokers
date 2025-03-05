@@ -1,0 +1,13 @@
+{
+    "id": "WOMOBS",
+    "name": "Wombat's Jokers",
+    "author": ["Wombat Country"],
+    "description": "Adds random and obscure meme and album related jokers that I thought would be fun to have.",
+    "prefix": "woms-obsc",
+    "main_file": "wombatsObscure.lua",
+    "badge_colour": "8affbe",
+    "dependencies": [
+        "Steamodded (>=1.0.0~ALPHA-1225a)"
+    ],
+    "version": "0.1.0"
+}
