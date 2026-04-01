@@ -12,3 +12,5 @@ Adds random and obscure meme and album related jokers that I thought would be fu
 - added tooltips
 - rewrote code for destroying and adding jokers with newer functions
 - changed Mall Wins For Now's ability
+
+As always, you can find me on the balatro discord for any bugs: https://discord.com/channels/1116389027176787968/1346661771464675488
