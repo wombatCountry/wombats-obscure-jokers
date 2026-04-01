@@ -2,6 +2,13 @@ Balatro Mod
 
 Adds random and obscure meme and album related jokers that I thought would be fun to have.
 
-I plan to add 22 Jokers Overall. There's 10 Jokers as of this update. I could share what they are and what they do here, but honestly, I'd like that to be a not-so-fun surprise for you as you play :]
+0.3.0 Changes:
 
-This is my first time doing many things like "mod a game," "bug test," "balance card game cards," and "create a github repo."
+- Added 3 new jokers:
+    - Limited 3d
+    - The Power of SPEEN
+    - Bikes Do So Much!
+- Reorganized mod files into meme.lua and music.lua
+- added tooltips
+- rewrote code for destroying and adding jokers with newer functions
+- changed Mall Wins For Now's ability
