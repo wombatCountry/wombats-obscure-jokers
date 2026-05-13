@@ -1,11 +1,5 @@
 SMODS.Joker {
 	key = 'dorphis',
-	loc_txt = {
-		name = 'The Dorphis',
-		text = {
-			"{X:mult,C:white}x#1#{} Mult, {X:chips,C:white}x#2#{} Chips"
-		}
-	},
     atlas = "WombatsObscure",
     pos = {x = 2, y = 0},
     rarity = 1,
@@ -36,14 +30,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'vegeta',
-    loc_txt = {
-        name= "The Vegeta",
-        text = {
-            "Gains {C:chips}#2#{} chips when cards are destroyed",
-            "Loses {C:chips}#3#{} chips when cards are added to your deck",
-            "{C:inactive}(Currently +{C:chips}#1#{C:inactive} chips)"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 5, y = 0},
     rarity = 1,
@@ -57,7 +43,7 @@ SMODS.Joker {
         return {vars = {center.ability.extra.chips, center.ability.extra.chip_gain, center.ability.extra.chip_loss}}
     end,
     calculate = function(self,card,context)
-        if context.joker_main then
+        if context.joker_main and card.ability.extra.chips ~= 0 then
             return {
                 card = card,
                 chip_mod = card.ability.extra.chips,
@@ -90,14 +76,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'couscous',
-    loc_txt = {
-        name= "Couscous Madame",
-        text = {
-            "When blind is selected,",
-            "self destruct and create",
-            "a random joker"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 6, y = 0},
     rarity = 1,
@@ -112,11 +90,18 @@ SMODS.Joker {
     end,
     calculate = function(self,card,context)
         if context.setting_blind then
-            SMODS.destroy_cards(card, nil, nil, true)
-            SMODS.add_card{ set = "Joker"}
             return {
                 card = card,
                 message = "Couscous Madame!",
+                func = function()
+                    G.E_MANAGER:add_event(Event({
+                        func = function() 
+                            SMODS.destroy_cards(card, nil, nil, true)
+                            SMODS.add_card{ set = "Joker"}
+                            return true 
+                        end
+                    }))
+                end
             }
         end
     end
@@ -124,13 +109,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'jimbunculus',
-    loc_txt = {
-        name= "Jimbunculus",
-        text = {
-            "{X:chips,C:white}x#1#{} chips when a poker hand",
-            "is played for the first time this run"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 7, y = 0},
     rarity = 1,
@@ -167,14 +145,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'mall',
-    loc_txt = {
-        name= "Mall Wins For Now",
-        text = {
-            "While owned, half off in shop.",
-            "{C:green}#1# in #2#{} chance to self destruct",
-            "and create a Splash at the end of each shop"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 8, y = 0},
     rarity = 3,
@@ -201,12 +171,18 @@ SMODS.Joker {
         
         if context.ending_shop then
             if pseudorandom('mall') < G.GAME.probabilities.normal / card.ability.extra.odds then
-                SMODS.destroy_cards(card, nil, nil, true)
-                SMODS.add_card{ set = "Joker", key = "j_splash"}
-                
                 return {
                     card = card,
                     message = "Water Always Comes Out On Top!",
+                    func = function()
+                        G.E_MANAGER:add_event(Event({
+                            func = function() 
+                                SMODS.destroy_cards(card, nil, nil, true)
+                                SMODS.add_card{ set = "Joker", key = "j_splash"}
+                                return true 
+                            end
+                        }))
+                    end
                 }
             end
         end
@@ -215,13 +191,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'brandon',
-    loc_txt = {
-        name= "Gambling City",
-        text = {
-            "{C:chips}+#1#{} chips and earn {C:money}$#2#{}",
-            "if played hand contains exactly 2 cards"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 9, y = 0},
     rarity = 1,
@@ -250,13 +219,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'femboy',
-    loc_txt = {
-        name= "Peak Gambler Performance",
-        text = {
-            "All scoring Jacks go up 1 rank",
-            "All scoring Kings go down 1 rank"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 0, y = 1},
     rarity = 2,
@@ -266,16 +228,31 @@ SMODS.Joker {
     },
     blueprint_compat = false,
     calculate = function(self,card,context)
-        if context.scoring_hand and context.individual and context.cardarea == G.play then
-            if context.other_card:get_id() == 13 then
-                context.other_card:flip() --yoinked this line from revo's vault https://github.com/Cdrvo/Revos-Vault/blob/b722dc4de7240c43cb51144ac24536ae7ac37475/items/Jokers/1_commons.lua#L364
-                assert(SMODS.modify_rank(context.other_card, -1))
-                context.other_card:flip()
-            end
-            if context.other_card:get_id() == 11 then
-                context.other_card:flip()
-                assert(SMODS.modify_rank(context.other_card, 1))
-                context.other_card:flip()
+        --used this card a bunch https://github.com/nh6574/VanillaRemade/blob/abd75789ff9711a83ffbe4bfbfeb63c44a92b35b/src/jokers.lua#L2097
+        if context.before and not context.blueprint then
+            for i, scored_card in ipairs(context.scoring_hand) do
+                if scored_card:get_id() == 13 then
+                    G.E_MANAGER:add_event(Event({
+                        func = function()
+                            scored_card:flip() --yoinked this line from revo's vault https://github.com/Cdrvo/Revos-Vault/blob/b722dc4de7240c43cb51144ac24536ae7ac37475/items/Jokers/1_commons.lua#L364
+                            assert(SMODS.modify_rank(scored_card, -1))
+                            play_sound('timpani')
+                            scored_card:flip()
+                            return true 
+                        end
+                    }))
+                end
+                if scored_card:get_id() == 11 then
+                    G.E_MANAGER:add_event(Event({
+                        func = function() 
+                            scored_card:flip()
+                            assert(SMODS.modify_rank(scored_card, 1))
+                            play_sound('timpani')
+                            scored_card:flip()
+                            return true 
+                        end
+                    }))
+                end
             end
         end
        --fun fact: the specific card I yoinked that line from, Do A Barrel Roll, is one of the cards I redid the art for!
@@ -285,13 +262,6 @@ SMODS.Joker {
 
 SMODS.Joker {
     key = 'speen',
-    loc_txt = {
-        name= "Power Of SPEEN",
-        text = {
-            "gains +{C:mult}#2#{} Mult when any card is flipped","resets at the end of the hand",
-            "{C:inactive}(Currently +{C:mult}#1#{C:inactive} mult)"
-        }
-    },
     atlas = "WombatsObscure",
     pos = {x = 4, y = 1},
     rarity = 1,
@@ -305,7 +275,7 @@ SMODS.Joker {
         return {vars = { center.ability.extra.mult, center.ability.extra.multMod}}
     end,
     calculate = function(self,card,context)
-        if context.modprefix_card_flipped then
+        if context.womobsc_card_flipped then
             card.ability.extra.mult = card.ability.extra.mult + card.ability.extra.multMod
         end
         if context.joker_main then
@@ -322,12 +292,6 @@ SMODS.Joker {
 
 SMODS.Joker {
 	key = "charming",
-	loc_txt = {
-		name = 'Limited 3d',
-		text = {
-			"Retrigger second card in played hand.","{C:green}#1# in #2#{} chance to create a negative","duplicate at the start of each round"
-		}
-	},
     atlas = "WombatsObscure",
     pos = {x = 2, y = 1},
     soul_pos = {x = 3, y = 1},
@@ -353,10 +317,17 @@ SMODS.Joker {
         if context.setting_blind then
             if pseudorandom('charming') < G.GAME.probabilities.normal / card.ability.extra.odds then
                 -- Thanks to nh6574, bepisfever, and theastra_ in the Balatro Discord for the help with this next line!
-                SMODS.add_card{ set = "Joker", edition = "e_negative", key = "j_woms-obsc_charming"}
                 return {
                     card = card,
                     message = "Wow!",
+                    func = function()
+                        G.E_MANAGER:add_event(Event({
+                            func = function() 
+                                SMODS.add_card{ set = "Joker", edition = "e_negative", key = "j_womsobsc_charming"}
+                                return true 
+                            end
+                        }))
+                    end
                 }
             end
         end
@@ -364,13 +335,7 @@ SMODS.Joker {
 }
 
 SMODS.Joker {
-    key = "borat_tepig",
-    loc_txt = {
-        name = 'Bikes Do So Much!',
-        text = {
-            "{X:mult,C:white}x#1#{} mult if scoring hand contains a pair.", "{X:mult,C:white}x#2#{} mult if scoring hand contains two pair"
-        }
-    },
+    key = "boratTepig",
     atlas = "WombatsObscure",
     pos = { x = 5, y = 1 },
     rarity = 3,
